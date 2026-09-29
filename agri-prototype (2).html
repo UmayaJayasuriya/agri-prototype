@@ -1,258 +1,253 @@
-<title>AgrI Prototype</title>
-<!--
-  AgrI — AI-assisted, market-aware farming assistant
-  PearlHack 4.0 Ideathon prototype · Team Trio · University of Moratuwa
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AgrI Prototype</title>
 
-  Single-file prototype (HTML + CSS + vanilla JS, no build step).
-  Open this file in any modern browser to run it.
+  <!--
+    AgrI - Agricultural Decision Support System
+    Pearl Hack 4.0 | Team Trio - University of Moratuwa
+    Interactive Prototype Demo (v1.0)
+  -->
 
-  Structure of the script below:
-    1. DATA      – districts, soils, water sources, crop profiles, subscription tiers
-    2. MODELS    – crop suitability model, market/saturation model (with k-anonymity
-                   threshold), profit-oriented ranking, plant-image classifier, chatbot
-    3. STATE     – user session, usage quotas, registered plans, feedback (localStorage)
-    4. UI        – screens (login, home, plan, market, identify, chat), sheets, actions
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap">
+  <style>
+  :root{
+    --ground:#e7ece3; --app:#f2f5ee; --panel:#ffffff; --panel-2:#eaf0e5;
+    --ink:#1b2317; --ink-2:#56614f; --line:#d3dbcb;
+    --leaf:#2d6a39; --leaf-soft:#dbeada; --on-leaf:#ffffff;
+    --turmeric:#b87c0c; --turmeric-soft:#f6e8c9;
+    --clay:#b1452a; --clay-soft:#f5ddd4;
+    --sky:#2b6a8a; --sky-soft:#dbe9f0;
+    --loam:#3a2c21;
+    --display:'Bricolage Grotesque','Segoe UI',system-ui,sans-serif;
+    --body:'Figtree',system-ui,-apple-system,'Segoe UI',sans-serif;
+    --mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
+    --r:14px;
+  }
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+    --ground:#0e110d; --app:#141812; --panel:#1b2019; --panel-2:#222820;
+    --ink:#e6ebde; --ink-2:#a2ac98; --line:#30372c;
+    --leaf:#7fc48c; --leaf-soft:#1e3322; --on-leaf:#0d1a10;
+    --turmeric:#e7b54a; --turmeric-soft:#3a2f16;
+    --clay:#ef8c6e; --clay-soft:#3e231b;
+    --sky:#82bbd8; --sky-soft:#18303b;
+    --loam:#2a2119; color-scheme:dark;
+  }}
+  :root[data-theme="dark"]{
+    --ground:#0e110d; --app:#141812; --panel:#1b2019; --panel-2:#222820;
+    --ink:#e6ebde; --ink-2:#a2ac98; --line:#30372c;
+    --leaf:#7fc48c; --leaf-soft:#1e3322; --on-leaf:#0d1a10;
+    --turmeric:#e7b54a; --turmeric-soft:#3a2f16;
+    --clay:#ef8c6e; --clay-soft:#3e231b;
+    --sky:#82bbd8; --sky-soft:#18303b;
+    --loam:#2a2119; color-scheme:dark;
+  }
+  *{box-sizing:border-box}
+  [hidden]{display:none!important}
+  html,body{height:100%}
+  body{background:var(--ground);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45;margin:0}
+  button,input,select{font:inherit;color:inherit}
+  :focus-visible{outline:2px solid var(--leaf);outline-offset:2px}
+  h1,h2,h3{font-family:var(--display);line-height:1.15;margin:0;text-wrap:balance}
+  p{margin:0}
+  .num{font-family:var(--mono);font-variant-numeric:tabular-nums}
 
-  In production (proposal §8) these models are PyTorch models served by FastAPI on
-  Cloud Run, with Firebase for auth/storage. Here they run in the browser so the full
-  workflow can be demonstrated offline.
--->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap">
-<style>
-/* Layout: phone-sized app on the left, a prototype guide beside it; stacks at phone width. */
-:root{
-  --ground:#e7ece3; --app:#f2f5ee; --panel:#ffffff; --panel-2:#eaf0e5;
-  --ink:#1b2317; --ink-2:#56614f; --line:#d3dbcb;
-  --leaf:#2d6a39; --leaf-soft:#dbeada; --on-leaf:#ffffff;
-  --turmeric:#b87c0c; --turmeric-soft:#f6e8c9;
-  --clay:#b1452a; --clay-soft:#f5ddd4;
-  --sky:#2b6a8a; --sky-soft:#dbe9f0;
-  --loam:#3a2c21;
-  --display:'Bricolage Grotesque','Segoe UI',system-ui,sans-serif;
-  --body:'Figtree',system-ui,-apple-system,'Segoe UI',sans-serif;
-  --mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
-  --r:14px;
-}
-@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
-  --ground:#0e110d; --app:#141812; --panel:#1b2019; --panel-2:#222820;
-  --ink:#e6ebde; --ink-2:#a2ac98; --line:#30372c;
-  --leaf:#7fc48c; --leaf-soft:#1e3322; --on-leaf:#0d1a10;
-  --turmeric:#e7b54a; --turmeric-soft:#3a2f16;
-  --clay:#ef8c6e; --clay-soft:#3e231b;
-  --sky:#82bbd8; --sky-soft:#18303b;
-  --loam:#2a2119; color-scheme:dark;
-}}
-:root[data-theme="dark"]{
-  --ground:#0e110d; --app:#141812; --panel:#1b2019; --panel-2:#222820;
-  --ink:#e6ebde; --ink-2:#a2ac98; --line:#30372c;
-  --leaf:#7fc48c; --leaf-soft:#1e3322; --on-leaf:#0d1a10;
-  --turmeric:#e7b54a; --turmeric-soft:#3a2f16;
-  --clay:#ef8c6e; --clay-soft:#3e231b;
-  --sky:#82bbd8; --sky-soft:#18303b;
-  --loam:#2a2119; color-scheme:dark;
-}
-*{box-sizing:border-box}
-[hidden]{display:none!important}
-html,body{height:100%}
-body{background:var(--ground);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45}
-button,input,select{font:inherit;color:inherit}
-:focus-visible{outline:2px solid var(--leaf);outline-offset:2px}
-h1,h2,h3{font-family:var(--display);line-height:1.15;margin:0;text-wrap:balance}
-p{margin:0}
-.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  .stage{height:100%;display:flex;justify-content:center}
+  .device{width:100%;max-width:520px;height:100%;background:var(--app);position:relative;overflow:hidden;border-inline:1px solid var(--line)}
+  .app{position:absolute;inset:0;display:flex;flex-direction:column}
 
-.stage{height:100%;display:flex;justify-content:center}
-.device{width:100%;max-width:520px;height:100%;background:var(--app);position:relative;overflow:hidden;border-inline:1px solid var(--line)}
-.app{position:absolute;inset:0;display:flex;flex-direction:column}
+  /* app bar */
+  .appbar{display:flex;align-items:center;gap:10px;padding:16px 16px 10px;background:var(--app)}
+  .brand{display:flex;align-items:center;gap:8px;font-family:var(--display);font-weight:800;font-size:22px;letter-spacing:-.02em}
+  .brand .mark{width:30px;height:30px;border-radius:9px;background:var(--leaf);color:var(--on-leaf);display:grid;place-items:center}
+  .brand i{font-style:normal;color:var(--turmeric)}
+  .spacer{flex:1}
+  .iconbtn{width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--panel);display:grid;place-items:center;cursor:pointer;position:relative}
+  .iconbtn .dot{position:absolute;top:6px;right:7px;width:8px;height:8px;border-radius:50%;background:var(--clay)}
+  .avatar{font-family:var(--display);font-weight:700;background:var(--leaf-soft);color:var(--leaf);border-color:transparent}
+  .offline{font-size:11px;font-weight:600;padding:3px 8px;border-radius:99px;background:var(--turmeric-soft);color:var(--turmeric)}
 
-/* app bar */
-.appbar{display:flex;align-items:center;gap:10px;padding:16px 16px 10px;background:var(--app)}
-.brand{display:flex;align-items:center;gap:8px;font-family:var(--display);font-weight:800;font-size:22px;letter-spacing:-.02em}
-.brand .mark{width:30px;height:30px;border-radius:9px;background:var(--leaf);color:var(--on-leaf);display:grid;place-items:center}
-.brand i{font-style:normal;color:var(--turmeric)}
-.spacer{flex:1}
-.iconbtn{width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--panel);display:grid;place-items:center;cursor:pointer;position:relative}
-.iconbtn .dot{position:absolute;top:6px;right:7px;width:8px;height:8px;border-radius:50%;background:var(--clay)}
-.avatar{font-family:var(--display);font-weight:700;background:var(--leaf-soft);color:var(--leaf);border-color:transparent}
-.offline{font-size:11px;font-weight:600;padding:3px 8px;border-radius:99px;background:var(--turmeric-soft);color:var(--turmeric)}
+  .screen{flex:1;overflow-y:auto;padding:4px 16px 20px;display:flex;flex-direction:column;gap:14px;scroll-behavior:smooth}
+  .screen.chatmode{padding-bottom:0}
 
-.screen{flex:1;overflow-y:auto;padding:4px 16px 20px;display:flex;flex-direction:column;gap:14px;scroll-behavior:smooth}
-.screen.chatmode{padding-bottom:0}
+  /* tab bar */
+  .tabbar{display:grid;grid-template-columns:repeat(5,1fr);border-top:1px solid var(--line);background:var(--panel);padding:6px 4px 8px}
+  .tab{border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;font-weight:600;color:var(--ink-2);padding:6px 0;cursor:pointer;border-radius:10px}
+  .tab svg{width:22px;height:22px}
+  .tab[aria-current="page"]{color:var(--leaf)}
+  .tab[aria-current="page"] svg{stroke-width:2.3}
 
-/* tab bar */
-.tabbar{display:grid;grid-template-columns:repeat(5,1fr);border-top:1px solid var(--line);background:var(--panel);padding:6px 4px 8px}
-.tab{border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;font-weight:600;color:var(--ink-2);padding:6px 0;cursor:pointer;border-radius:10px}
-.tab svg{width:22px;height:22px}
-.tab[aria-current="page"]{color:var(--leaf)}
-.tab[aria-current="page"] svg{stroke-width:2.3}
+  svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 
-svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  /* generic */
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px}
+  .section-h{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+  .section-h h2{font-size:17px}
+  .eyebrow{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2)}
+  .muted{color:var(--ink-2)}
+  .small{font-size:13px}
+  .xs{font-size:12px}
+  .stack{display:flex;flex-direction:column;gap:10px}
+  .row{display:flex;align-items:center;gap:10px}
+  .row.wrap{flex-wrap:wrap}
+  .grow{flex:1;min-width:0}
+  .btn{border:0;border-radius:12px;padding:12px 16px;font-weight:700;cursor:pointer;background:var(--leaf);color:var(--on-leaf);display:inline-flex;align-items:center;justify-content:center;gap:8px}
+  .btn.block{width:100%}
+  .btn.ghost{background:transparent;color:var(--leaf);border:1px solid var(--line)}
+  .btn.soft{background:var(--leaf-soft);color:var(--leaf)}
+  .btn.sm{padding:8px 12px;font-size:13px;border-radius:10px}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .link{background:none;border:0;padding:0;color:var(--leaf);font-weight:700;cursor:pointer;font-size:13px}
 
-/* generic */
-.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px}
-.section-h{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
-.section-h h2{font-size:17px}
-.eyebrow{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2)}
-.muted{color:var(--ink-2)}
-.small{font-size:13px}
-.xs{font-size:12px}
-.stack{display:flex;flex-direction:column;gap:10px}
-.row{display:flex;align-items:center;gap:10px}
-.row.wrap{flex-wrap:wrap}
-.grow{flex:1;min-width:0}
-.btn{border:0;border-radius:12px;padding:12px 16px;font-weight:700;cursor:pointer;background:var(--leaf);color:var(--on-leaf);display:inline-flex;align-items:center;justify-content:center;gap:8px}
-.btn.block{width:100%}
-.btn.ghost{background:transparent;color:var(--leaf);border:1px solid var(--line)}
-.btn.soft{background:var(--leaf-soft);color:var(--leaf)}
-.btn.sm{padding:8px 12px;font-size:13px;border-radius:10px}
-.btn:disabled{opacity:.5;cursor:not-allowed}
-.link{background:none;border:0;padding:0;color:var(--leaf);font-weight:700;cursor:pointer;font-size:13px}
+  .field{display:flex;flex-direction:column;gap:5px}
+  .field label,.field .lbl{font-size:12px;font-weight:700;color:var(--ink-2)}
+  .field input,.field select{width:100%;border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:11px 12px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .seg{display:flex;background:var(--panel-2);border-radius:11px;padding:3px;gap:3px}
+  .seg label{flex:1;text-align:center;padding:8px 6px;border-radius:9px;font-weight:600;font-size:13px;cursor:pointer;color:var(--ink-2)}
+  .seg input{position:absolute;opacity:0;pointer-events:none}
+  .seg input:checked+span{color:var(--ink)}
+  .seg label:has(input:checked){background:var(--panel);box-shadow:0 1px 2px rgba(0,0,0,.12);color:var(--ink)}
+  .seg label:has(input:focus-visible){outline:2px solid var(--leaf)}
 
-.field{display:flex;flex-direction:column;gap:5px}
-.field label,.field .lbl{font-size:12px;font-weight:700;color:var(--ink-2)}
-.field input,.field select{width:100%;border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:11px 12px}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.seg{display:flex;background:var(--panel-2);border-radius:11px;padding:3px;gap:3px}
-.seg label{flex:1;text-align:center;padding:8px 6px;border-radius:9px;font-weight:600;font-size:13px;cursor:pointer;color:var(--ink-2)}
-.seg input{position:absolute;opacity:0;pointer-events:none}
-.seg input:checked+span{color:var(--ink)}
-.seg label:has(input:checked){background:var(--panel);box-shadow:0 1px 2px rgba(0,0,0,.12);color:var(--ink)}
-.seg label:has(input:focus-visible){outline:2px solid var(--leaf)}
+  /* status pills: saturation + suitability */
+  .pill{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;padding:3px 8px;border-radius:99px;white-space:nowrap}
+  .pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+  .st-under{background:var(--leaf-soft);color:var(--leaf)}
+  .st-bal{background:var(--sky-soft);color:var(--sky)}
+  .st-crowd{background:var(--turmeric-soft);color:var(--turmeric)}
+  .st-over{background:var(--clay-soft);color:var(--clay)}
+  .st-hidden{background:var(--panel-2);color:var(--ink-2)}
 
-/* status pills: saturation + suitability */
-.pill{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;padding:3px 8px;border-radius:99px;white-space:nowrap}
-.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
-.st-under{background:var(--leaf-soft);color:var(--leaf)}
-.st-bal{background:var(--sky-soft);color:var(--sky)}
-.st-crowd{background:var(--turmeric-soft);color:var(--turmeric)}
-.st-over{background:var(--clay-soft);color:var(--clay)}
-.st-hidden{background:var(--panel-2);color:var(--ink-2)}
+  /* home */
+  .hello h1{font-size:26px;letter-spacing:-.02em}
+  .season{background:var(--loam);color:#f3ecdf;border-radius:18px;padding:16px;position:relative;overflow:hidden}
+  .season .eyebrow{color:#d9c9a8}
+  .season h2{font-size:20px;margin-top:4px}
+  .season p{color:#e6dcc8;font-size:13px;margin-top:6px;max-width:30ch}
+  .season canvas{position:absolute;right:-8px;bottom:-8px;width:130px;height:110px;opacity:.9}
+  .quick{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .qa{border:1px solid var(--line);background:var(--panel);border-radius:var(--r);padding:12px;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:6px}
+  .qa .ic{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:var(--leaf-soft);color:var(--leaf)}
+  .qa:nth-child(2) .ic{background:var(--turmeric-soft);color:var(--turmeric)}
+  .qa:nth-child(3) .ic{background:var(--sky-soft);color:var(--sky)}
+  .qa:nth-child(4) .ic{background:var(--clay-soft);color:var(--clay)}
+  .qa b{font-size:14px}
+  .qa span{font-size:12px;color:var(--ink-2)}
 
-/* home */
-.hello h1{font-size:26px;letter-spacing:-.02em}
-.season{background:var(--loam);color:#f3ecdf;border-radius:18px;padding:16px;position:relative;overflow:hidden}
-.season .eyebrow{color:#d9c9a8}
-.season h2{font-size:20px;margin-top:4px}
-.season p{color:#e6dcc8;font-size:13px;margin-top:6px;max-width:30ch}
-.season canvas{position:absolute;right:-8px;bottom:-8px;width:130px;height:110px;opacity:.9}
-.quick{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.qa{border:1px solid var(--line);background:var(--panel);border-radius:var(--r);padding:12px;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:6px}
-.qa .ic{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:var(--leaf-soft);color:var(--leaf)}
-.qa:nth-child(2) .ic{background:var(--turmeric-soft);color:var(--turmeric)}
-.qa:nth-child(3) .ic{background:var(--sky-soft);color:var(--sky)}
-.qa:nth-child(4) .ic{background:var(--clay-soft);color:var(--clay)}
-.qa b{font-size:14px}
-.qa span{font-size:12px;color:var(--ink-2)}
+  .list{display:flex;flex-direction:column}
+  .li{display:flex;align-items:center;gap:12px;padding:11px 0;border-top:1px solid var(--line);background:none;border-left:0;border-right:0;border-bottom:0;text-align:left;width:100%}
+  .li:first-child{border-top:0}
+  button.li{cursor:pointer}
+  .li .t{font-weight:700}
+  .li .s{font-size:12px;color:var(--ink-2)}
+  .crop-ic{width:38px;height:38px;border-radius:11px;flex-shrink:0;display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:15px}
+  .right{text-align:right;flex-shrink:0}
 
-.list{display:flex;flex-direction:column}
-.li{display:flex;align-items:center;gap:12px;padding:11px 0;border-top:1px solid var(--line);background:none;border-left:0;border-right:0;border-bottom:0;text-align:left;width:100%}
-.li:first-child{border-top:0}
-button.li{cursor:pointer}
-.li .t{font-weight:700}
-.li .s{font-size:12px;color:var(--ink-2)}
-.crop-ic{width:38px;height:38px;border-radius:11px;flex-shrink:0;display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:15px}
-.right{text-align:right;flex-shrink:0}
+  /* plan */
+  .result-head{display:flex;gap:14px;align-items:center}
+  .dial{width:104px;height:104px;flex-shrink:0}
+  .dial .trk{stroke:var(--panel-2)}
+  .dial text{fill:var(--ink);font-family:var(--display);font-weight:800}
+  .dial .sub{fill:var(--ink-2);font-family:var(--body);font-weight:600;font-size:10px}
+  .factor{display:grid;grid-template-columns:96px 1fr 34px;gap:10px;align-items:center;font-size:13px}
+  .bar{height:8px;border-radius:99px;background:var(--panel-2);overflow:hidden}
+  .bar>i{display:block;height:100%;border-radius:99px;background:var(--leaf)}
+  .bar>i.mid{background:var(--turmeric)}
+  .bar>i.low{background:var(--clay)}
+  .factor .note{grid-column:1/-1;font-size:11.5px;color:var(--ink-2);margin-top:-6px}
+  .econ{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .econ div{background:var(--panel);padding:10px}
+  .econ b{display:block;font-family:var(--mono);font-size:14px;font-variant-numeric:tabular-nums}
+  .econ span{font-size:11.5px;color:var(--ink-2)}
+  .econ .pos{color:var(--leaf)} .econ .neg{color:var(--clay)}
+  .callout{border-radius:12px;padding:10px 12px;font-size:13px;display:flex;gap:8px;align-items:flex-start}
+  .callout.warn{background:var(--clay-soft);color:var(--ink)}
+  .callout.good{background:var(--leaf-soft);color:var(--ink)}
+  .callout.info{background:var(--sky-soft);color:var(--ink)}
+  .callout svg{flex-shrink:0;margin-top:1px}
 
-/* plan */
-.result-head{display:flex;gap:14px;align-items:center}
-.dial{width:104px;height:104px;flex-shrink:0}
-.dial .trk{stroke:var(--panel-2)}
-.dial text{fill:var(--ink);font-family:var(--display);font-weight:800}
-.dial .sub{fill:var(--ink-2);font-family:var(--body);font-weight:600;font-size:10px}
-.factor{display:grid;grid-template-columns:96px 1fr 34px;gap:10px;align-items:center;font-size:13px}
-.bar{height:8px;border-radius:99px;background:var(--panel-2);overflow:hidden}
-.bar>i{display:block;height:100%;border-radius:99px;background:var(--leaf)}
-.bar>i.mid{background:var(--turmeric)}
-.bar>i.low{background:var(--clay)}
-.factor .note{grid-column:1/-1;font-size:11.5px;color:var(--ink-2);margin-top:-6px}
-.econ{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden}
-.econ div{background:var(--panel);padding:10px}
-.econ b{display:block;font-family:var(--mono);font-size:14px;font-variant-numeric:tabular-nums}
-.econ span{font-size:11.5px;color:var(--ink-2)}
-.econ .pos{color:var(--leaf)} .econ .neg{color:var(--clay)}
-.callout{border-radius:12px;padding:10px 12px;font-size:13px;display:flex;gap:8px;align-items:flex-start}
-.callout.warn{background:var(--clay-soft);color:var(--ink)}
-.callout.good{background:var(--leaf-soft);color:var(--ink)}
-.callout.info{background:var(--sky-soft);color:var(--ink)}
-.callout svg{flex-shrink:0;margin-top:1px}
+  /* market */
+  .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .tile{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px}
+  .tile b{display:block;font-family:var(--display);font-size:22px}
+  .tile span{font-size:11px;color:var(--ink-2);font-weight:600}
+  .satbar{position:relative;height:8px;border-radius:99px;background:var(--panel-2);margin-top:6px}
+  .satbar i{position:absolute;left:0;top:0;bottom:0;border-radius:99px}
+  .satbar .ref{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--ink-2);opacity:.6}
+  .locked{position:relative}
+  .locked .veil{filter:blur(4px);pointer-events:none;user-select:none}
+  .locked .lockmsg{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:12px}
+  .lockmsg .card{box-shadow:0 10px 30px -10px rgba(0,0,0,.3)}
+  .chart text{fill:var(--ink-2);font-size:10px;font-family:var(--mono)}
+  .chart .grid{stroke:var(--line)}
+  .chart .ln{stroke:var(--leaf);fill:none;stroke-width:2}
+  .chart .area{fill:var(--leaf);opacity:.12}
+  .chart .fc{stroke:var(--turmeric);stroke-dasharray:4 4;fill:none;stroke-width:2}
+  .chart .fcdot{fill:var(--turmeric)}
+  .chart .enddot{fill:var(--leaf)}
+  .regbar{display:grid;grid-template-columns:92px 1fr 44px;gap:8px;align-items:center;font-size:12.5px}
 
-/* market */
-.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.tile{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px}
-.tile b{display:block;font-family:var(--display);font-size:22px}
-.tile span{font-size:11px;color:var(--ink-2);font-weight:600}
-.satbar{position:relative;height:8px;border-radius:99px;background:var(--panel-2);margin-top:6px}
-.satbar i{position:absolute;left:0;top:0;bottom:0;border-radius:99px}
-.satbar .ref{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--ink-2);opacity:.6}
-.locked{position:relative}
-.locked .veil{filter:blur(4px);pointer-events:none;user-select:none}
-.locked .lockmsg{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:12px}
-.lockmsg .card{box-shadow:0 10px 30px -10px rgba(0,0,0,.3)}
-.chart text{fill:var(--ink-2);font-size:10px;font-family:var(--mono)}
-.chart .grid{stroke:var(--line)}
-.chart .ln{stroke:var(--leaf);fill:none;stroke-width:2}
-.chart .area{fill:var(--leaf);opacity:.12}
-.chart .fc{stroke:var(--turmeric);stroke-dasharray:4 4;fill:none;stroke-width:2}
-.chart .fcdot{fill:var(--turmeric)}
-.chart .enddot{fill:var(--leaf)}
-.regbar{display:grid;grid-template-columns:92px 1fr 44px;gap:8px;align-items:center;font-size:12.5px}
+  /* identify */
+  .drop{border:1.5px dashed var(--line);border-radius:16px;padding:16px;text-align:center;background:var(--panel);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px}
+  .drop.over{border-color:var(--leaf);background:var(--leaf-soft)}
+  .samples{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
+  .sample{border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:4px;cursor:pointer;flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;font-weight:600;color:var(--ink-2)}
+  .sample img{width:58px;height:58px;border-radius:9px;display:block}
+  .idwrap{display:flex;gap:12px;align-items:flex-start}
+  .idwrap canvas{width:112px;height:112px;border-radius:12px;flex-shrink:0;background:var(--panel-2)}
+  .prob{display:grid;grid-template-columns:84px 1fr 38px;gap:8px;align-items:center;font-size:12.5px}
 
-/* identify */
-.drop{border:1.5px dashed var(--line);border-radius:16px;padding:16px;text-align:center;background:var(--panel);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px}
-.drop.over{border-color:var(--leaf);background:var(--leaf-soft)}
-.samples{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
-.sample{border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:4px;cursor:pointer;flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;font-weight:600;color:var(--ink-2)}
-.sample img{width:58px;height:58px;border-radius:9px;display:block}
-.idwrap{display:flex;gap:12px;align-items:flex-start}
-.idwrap canvas{width:112px;height:112px;border-radius:12px;flex-shrink:0;background:var(--panel-2)}
-.prob{display:grid;grid-template-columns:84px 1fr 38px;gap:8px;align-items:center;font-size:12.5px}
+  /* chat */
+  .msgs{display:flex;flex-direction:column;gap:10px;padding-bottom:10px}
+  .msg{max-width:86%;padding:10px 12px;border-radius:16px;font-size:14px}
+  .msg.me{align-self:flex-end;background:var(--leaf);color:var(--on-leaf);border-bottom-right-radius:5px}
+  .msg.bot{align-self:flex-start;background:var(--panel);border:1px solid var(--line);border-bottom-left-radius:5px}
+  .msg.bot .li{padding:7px 0}
+  .msg p+p{margin-top:6px}
+  .typing span{display:inline-block;width:6px;height:6px;margin:0 2px;border-radius:50%;background:var(--ink-2);animation:bl 1s infinite}
+  .typing span:nth-child(2){animation-delay:.15s}.typing span:nth-child(3){animation-delay:.3s}
+  @keyframes bl{0%,100%{opacity:.25}50%{opacity:1}}
+  .chips{display:flex;gap:6px;flex-wrap:wrap}
+  .chip{border:1px solid var(--line);background:var(--panel);border-radius:99px;padding:6px 11px;font-size:12.5px;font-weight:600;cursor:pointer;color:var(--ink)}
+  .composer{position:sticky;bottom:0;background:var(--app);padding:10px 0 12px;display:flex;flex-direction:column;gap:8px;margin-top:auto}
+  .composer form{display:flex;gap:8px}
+  .composer input{flex:1;min-width:0;border:1px solid var(--line);background:var(--panel);border-radius:99px;padding:11px 14px}
+  .composer .btn{border-radius:99px;padding:0 16px}
 
-/* chat */
-.msgs{display:flex;flex-direction:column;gap:10px;padding-bottom:10px}
-.msg{max-width:86%;padding:10px 12px;border-radius:16px;font-size:14px}
-.msg.me{align-self:flex-end;background:var(--leaf);color:var(--on-leaf);border-bottom-right-radius:5px}
-.msg.bot{align-self:flex-start;background:var(--panel);border:1px solid var(--line);border-bottom-left-radius:5px}
-.msg.bot .li{padding:7px 0}
-.msg p+p{margin-top:6px}
-.typing span{display:inline-block;width:6px;height:6px;margin:0 2px;border-radius:50%;background:var(--ink-2);animation:bl 1s infinite}
-.typing span:nth-child(2){animation-delay:.15s}.typing span:nth-child(3){animation-delay:.3s}
-@keyframes bl{0%,100%{opacity:.25}50%{opacity:1}}
-.chips{display:flex;gap:6px;flex-wrap:wrap}
-.chip{border:1px solid var(--line);background:var(--panel);border-radius:99px;padding:6px 11px;font-size:12.5px;font-weight:600;cursor:pointer;color:var(--ink)}
-.composer{position:sticky;bottom:0;background:var(--app);padding:10px 0 12px;display:flex;flex-direction:column;gap:8px;margin-top:auto}
-.composer form{display:flex;gap:8px}
-.composer input{flex:1;min-width:0;border:1px solid var(--line);background:var(--panel);border-radius:99px;padding:11px 14px}
-.composer .btn{border-radius:99px;padding:0 16px}
+  /* sheet + toast */
+  .sheet{position:absolute;inset:0;z-index:20;display:flex;flex-direction:column;justify-content:flex-end}
+  .sheet-back{position:absolute;inset:0;background:rgba(10,14,8,.45)}
+  .sheet-body{position:relative;background:var(--app);border-radius:22px 22px 0 0;max-height:88%;overflow-y:auto;padding:10px 16px 20px;display:flex;flex-direction:column;gap:14px;animation:up .22s ease-out}
+  .sheet-body .grab{width:40px;height:5px;border-radius:99px;background:var(--line);margin:0 auto 2px}
+  @keyframes up{from{transform:translateY(30px);opacity:.4}to{transform:none;opacity:1}}
+  .toast{position:absolute;left:16px;right:16px;bottom:84px;z-index:30;background:var(--ink);color:var(--app);padding:11px 14px;border-radius:12px;font-size:13.5px;font-weight:600;box-shadow:0 10px 30px -10px rgba(0,0,0,.5)}
+  .tier{border:1.5px solid var(--line);border-radius:14px;padding:12px;background:var(--panel);display:flex;flex-direction:column;gap:6px}
+  .tier.cur{border-color:var(--leaf)}
+  .tier ul{margin:0;padding-left:18px;font-size:13px;color:var(--ink-2)}
+  .quota{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 
-/* sheet + toast */
-.sheet{position:absolute;inset:0;z-index:20;display:flex;flex-direction:column;justify-content:flex-end}
-.sheet-back{position:absolute;inset:0;background:rgba(10,14,8,.45)}
-.sheet-body{position:relative;background:var(--app);border-radius:22px 22px 0 0;max-height:88%;overflow-y:auto;padding:10px 16px 20px;display:flex;flex-direction:column;gap:14px;animation:up .22s ease-out}
-.sheet-body .grab{width:40px;height:5px;border-radius:99px;background:var(--line);margin:0 auto 2px}
-@keyframes up{from{transform:translateY(30px);opacity:.4}to{transform:none;opacity:1}}
-.toast{position:absolute;left:16px;right:16px;bottom:84px;z-index:30;background:var(--ink);color:var(--app);padding:11px 14px;border-radius:12px;font-size:13.5px;font-weight:600;box-shadow:0 10px 30px -10px rgba(0,0,0,.5)}
-.tier{border:1.5px solid var(--line);border-radius:14px;padding:12px;background:var(--panel);display:flex;flex-direction:column;gap:6px}
-.tier.cur{border-color:var(--leaf)}
-.tier ul{margin:0;padding-left:18px;font-size:13px;color:var(--ink-2)}
-.quota{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  /* login */
+  .login{padding:26px 22px;display:flex;flex-direction:column;gap:16px;flex:1;overflow-y:auto}
+  .login .hero{background:var(--loam);border-radius:22px;padding:22px 18px;color:#f3ecdf;position:relative;overflow:hidden;min-height:190px;display:flex;flex-direction:column;justify-content:flex-end}
+  .login .hero h1{font-size:40px;letter-spacing:-.03em;font-weight:800}
+  .login .hero h1 i{font-style:normal;color:#e9b44c}
+  .login .hero p{color:#e2d7c2;font-size:14px;max-width:26ch;margin-top:4px;position:relative}
+  .login .hero canvas{position:absolute;right:0;top:0;width:100%;height:100%;opacity:.55}
+  .login .hero > *:not(canvas){position:relative}
+  .demo-hint{font-family:var(--mono);font-size:12px;background:var(--turmeric-soft);color:var(--ink);padding:6px 10px;border-radius:8px}
+  .divider{display:flex;align-items:center;gap:10px;color:var(--ink-2);font-size:12px}
+  .divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--line)}
 
-/* login */
-.login{padding:26px 22px;display:flex;flex-direction:column;gap:16px;flex:1;overflow-y:auto}
-.login .hero{background:var(--loam);border-radius:22px;padding:22px 18px;color:#f3ecdf;position:relative;overflow:hidden;min-height:190px;display:flex;flex-direction:column;justify-content:flex-end}
-.login .hero h1{font-size:40px;letter-spacing:-.03em;font-weight:800}
-.login .hero h1 i{font-style:normal;color:#e9b44c}
-.login .hero p{color:#e2d7c2;font-size:14px;max-width:26ch;margin-top:4px;position:relative}
-.login .hero canvas{position:absolute;right:0;top:0;width:100%;height:100%;opacity:.55}
-.login .hero > *:not(canvas){position:relative}
-.demo-hint{font-family:var(--mono);font-size:12px;background:var(--turmeric-soft);color:var(--ink);padding:6px 10px;border-radius:8px}
-.divider{display:flex;align-items:center;gap:10px;color:var(--ink-2);font-size:12px}
-.divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--line)}
-
-@media (max-width:520px){.device{border-inline:0}}
-@media (prefers-reduced-motion:reduce){*{animation:none!important;scroll-behavior:auto!important}}
-</style>
+  @media (max-width:520px){.device{border-inline:0}}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;scroll-behavior:auto!important}}
+  </style>
+</head>
+<body>
 
 <div class="stage">
   <section class="device" aria-label="AgrI mobile app prototype">
@@ -264,17 +259,11 @@ button.li{cursor:pointer}
       <div class="toast" id="toast" role="status" hidden></div>
     </div>
   </section>
-
 </div>
 
 <script>
 "use strict";
-/* =====================================================================
-   1. DATA
-   ===================================================================== */
 
-// Sri Lankan districts: climatic zone (Wet/Intermediate/Dry), elevation band
-// (Low/Mid/Up country), seasonal rainfall in mm, mean temperature °C, typical soil.
 const DISTRICTS = {
   'Colombo':     {z:'W',e:'L',maha:1100,yala:1300,t:28,  soil:'RYP'},
   'Gampaha':     {z:'W',e:'L',maha:1000,yala:1200,t:28,  soil:'RYP'},
@@ -309,7 +298,6 @@ const SOILS = {
   RBE:'Reddish Brown Earth', LHG:'Low Humic Gley', RYP:'Red-Yellow Podzolic',
   ALL:'Alluvial', SR:'Sandy Regosol', RYL:'Red-Yellow Latosol'
 };
-// Irrigation adds effective water on top of seasonal rainfall (mm).
 const WATER = {
   rain:{name:'Rain-fed only', add:0},
   well:{name:'Agro-well / hand watering', add:250},
@@ -321,9 +309,6 @@ const SEASONS = {
   yala:{name:'Yala', long:'Yala 2027', months:'Apr–Sep', monsoon:'South-West monsoon'},
 };
 
-// Crop profiles. Weights are 0..1 preference per factor.
-// yield = kg/acre at full suitability, cost = LKR/acre inputs, price = LKR/kg typical farm-gate,
-// demand = relative market size used to size district demand.
 const C = (id, name, o) => ({id, name, market:true, ...o});
 const CROPS = [
   C('paddy','Paddy',{group:'Grain',zone:{W:.8,I:1,D:1},elev:{L:1,M:.8,U:.35},temp:[20,35],rain:[900,2400],soil:{LHG:1,ALL:1,RBE:.7,RYP:.6,SR:.3,RYL:.5},season:{maha:1,yala:.85},days:'105–120 days',yield:1800,cost:95000,price:125,demand:40,
@@ -366,7 +351,6 @@ const CROPS = [
     tip:'Train vines on a trellis for straighter fruit and easier picking.',pest:'Downy mildew likes humid mornings; water at the base only.'}),
   C('banana','Banana (Ambul)',{group:'Fruit',zone:{W:1,I:1,D:.75},elev:{L:1,M:.9,U:.3},temp:[20,34],rain:[700,2400],soil:{RYP:1,ALL:1,RBE:.8,RYL:.8,SR:.4,LHG:.5},season:{maha:1,yala:.9},days:'first bunch at ~12 months',yield:6000,cost:260000,price:120,demand:6,garden:'yard',sun:6,
     tip:'Keep one mother plant and one or two followers per clump; remove extra suckers.',pest:'Bunchy top is spread by aphids; remove and destroy infected plants.'}),
-  // Garden-only greens (not traded in the market model).
   C('kangkong','Kang kong',{group:'Leafy green',market:false,zone:{W:1,I:1,D:1},elev:{L:1,M:.8,U:.4},temp:[20,35],rain:[800,2400],soil:{LHG:1,ALL:1,RYP:.9,RBE:.8,RYL:.8,SR:.6},season:{maha:1,yala:1},days:'first cut at 30 days',yield:0,cost:0,price:0,demand:0,garden:'pot',sun:4,
     tip:'Grows from cuttings in a pot kept wet; cut shoots every 2 weeks.',pest:'Few pests; caterpillars can be hand-picked.'}),
   C('gotukola','Gotukola',{group:'Leafy green',market:false,zone:{W:1,I:1,D:.8},elev:{L:1,M:1,U:.7},temp:[18,32],rain:[800,2400],soil:{RYP:1,ALL:1,LHG:.9,RBE:.8,RYL:.8,SR:.6},season:{maha:1,yala:1},days:'harvest from 45 days',yield:0,cost:0,price:0,demand:0,garden:'pot',sun:4,
@@ -384,22 +368,16 @@ const TIERS = {
            perks:['Unlimited checks and plant IDs','Regional saturation comparison','Priority assistant','Early access to new AI features']},
 };
 
-/* =====================================================================
-   2. MODELS
-   ===================================================================== */
-
-// Deterministic pseudo-random helpers so sample data is stable between reloads.
 function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
 function hashStr(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
 const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
 
 function currentSeason(date = new Date()){
-  const m = date.getMonth();            // Maha: Oct–Mar, Yala: Apr–Sep.
-  if (m >= 3 && m <= 7) return 'yala';  // Apr–Aug → currently Yala
-  return 'maha';                        // Sep onward → upcoming/ongoing Maha
+  const m = date.getMonth();
+  if (m >= 3 && m <= 7) return 'yala';
+  return 'maha';
 }
 
-/* ---- 2a. Crop suitability model ------------------------------------ */
 const FACTOR_WEIGHTS = {zone:.10, elev:.20, temp:.25, water:.25, soil:.12, season:.08};
 
 function rangeScore(v, [lo, hi], perUnit){
@@ -409,16 +387,10 @@ function rangeScore(v, [lo, hi], perUnit){
 }
 function waterScore(w, [lo, hi]){
   if (w >= lo && w <= hi) return 1;
-  if (w < lo) return clamp(1 - (lo - w) / lo * 1.5, 0, 1);   // drought stress
-  return clamp(1 - (w - hi) / hi * 0.8, 0.2, 1);              // excess water
+  if (w < lo) return clamp(1 - (lo - w) / lo * 1.5, 0, 1);
+  return clamp(1 - (w - hi) / hi * 0.8, 0.2, 1);
 }
 
-/**
- * Score how suitable a crop is for given conditions.
- * @param {string} cropId
- * @param {{district:string, season:'maha'|'yala', soil:string, water:string}} inp
- * @returns {{score:number, label:string, cls:string, factors:Array}}
- */
 function suitability(cropId, inp){
   const c = CROP[cropId], d = DISTRICTS[inp.district];
   const temp = d.t + (inp.season === 'maha' ? -0.8 : 0.6);
@@ -433,7 +405,6 @@ function suitability(cropId, inp){
   };
   let score = 0;
   for (const k in FACTOR_WEIGHTS) score += FACTOR_WEIGHTS[k] * f[k];
-  // Limiting-factor penalty: one very poor factor (e.g. far too hot) caps the whole crop.
   score = Math.round(score * (0.6 + 0.4 * Math.min(...Object.values(f))) * 100);
   const factors = [
     {k:'zone',  name:'Climate zone', v:f.zone,  note:ZONE_NAME[d.z]},
@@ -452,10 +423,6 @@ function suitLabel(s){
   return {label:'Not suitable', cls:'st-over'};
 }
 
-/* ---- 2b. Market / crop-saturation model ---------------------------- */
-// Sample aggregated planting data per season|district|crop:
-//   D = expected demand (acres the local market absorbs), P = planned acres, k = farmers.
-// A few known hotspots are exaggerated so oversupply is visible in the demo.
 const HOTSPOTS = {
   'yala|Matale|bigonion':1.9, 'yala|Anuradhapura|bigonion':1.65, 'maha|Nuwara Eliya|potato':1.5,
   'maha|Nuwara Eliya|carrot':1.7, 'maha|Anuradhapura|chilli':1.45, 'maha|Polonnaruwa|paddy':1.3,
@@ -464,7 +431,7 @@ const HOTSPOTS = {
   'maha|Anuradhapura|bigonion':1.35, 'yala|Anuradhapura|chilli':1.3,
 };
 const CROP_BIAS = {greengram:.6, cowpea:.7, groundnut:.75};
-const PRIVACY_K = 5;   // groups with fewer farmers are never shown (threshold-based aggregation)
+const PRIVACY_K = 5;
 
 let MARKET_BASE = null;
 function buildMarket(){
@@ -489,7 +456,7 @@ function satStatus(sat){
   if (sat <= 1.4) return {label:'Crowded', cls:'st-crowd', short:'Crowded'};
   return {label:'Oversupply risk', cls:'st-over', short:'Oversupply'};
 }
-/** Aggregated market view for one crop in one district and season, including the user's own plans. */
+
 function marketCell(season, district, cropId){
   const c = CROP[cropId];
   if (!c.market) return null;
@@ -499,7 +466,6 @@ function marketCell(season, district, cropId){
   for (const p of (state?.plans || [])) if (p.season === season && p.district === district && p.crop === cropId){ P += p.acres; k += 1; }
   const suppressed = k < PRIVACY_K || D <= 0;
   const sat = D > 0 ? P / D : 0;
-  // Simple inverse-demand curve: more supply than demand pushes the harvest price down.
   const price = suppressed ? c.price : c.price * clamp(1 - 0.55 * (sat - 1), 0.45, 1.45);
   return {D, P, k, sat, suppressed, price, ...(suppressed ? {label:'Not enough data', cls:'st-hidden', short:'Hidden'} : satStatus(sat))};
 }
@@ -508,13 +474,12 @@ function contributors(season, district){
   for (const c of MARKET_CROPS){ const m = marketCell(season, district, c.id); if (!m.suppressed) n += m.k; }
   return n;
 }
-/** 12 months of illustrative price history (Oct 2025 → Sep 2026). */
+
 function priceHistory(cropId){
   const c = CROP[cropId], r = mulberry32(hashStr('hist' + cropId)), ph = r() * 12;
   return Array.from({length:12}, (_, i) => Math.round(c.price * (1 + 0.16 * Math.sin((i + ph) / 12 * Math.PI * 2) + (r() - .5) * .08)));
 }
 
-/* ---- 2c. Profit-oriented ranking ----------------------------------- */
 function economics(cropId, score, m, acres = 1){
   const c = CROP[cropId];
   const kg = c.yield * (0.45 + 0.55 * score / 100) * acres;
@@ -522,7 +487,7 @@ function economics(cropId, score, m, acres = 1){
   const revenue = kg * price, cost = c.cost * acres;
   return {kg, price, revenue, cost, profit: revenue - cost};
 }
-/** Crops scoring ≥ 60 suitability, ranked by expected profit per acre at forecast prices. */
+
 function rankCrops(inp, exclude){
   return MARKET_CROPS
     .filter(c => c.id !== exclude)
@@ -533,7 +498,7 @@ function rankCrops(inp, exclude){
     .filter(x => x.s.score >= 60)
     .sort((a, b) => b.e.profit - a.e.profit);
 }
-/** Home-garden recommendations: sunlight and space constraints on top of climate suitability. */
+
 function gardenPicks(district, space, sunHours){
   const season = currentSeason();
   return CROPS.filter(c => c.garden && (space !== 'pot' || c.garden === 'pot'))
@@ -545,7 +510,6 @@ function gardenPicks(district, space, sunHours){
     .sort((a, b) => b.score - a.score);
 }
 
-/* ---- 2d. Plant identification (feature extraction + prototype matching) ---- */
 const ID_CLASSES = ['paddy','tomato','chilli','brinjal','cabbage','bigonion','maize','banana','pumpkin','carrot'];
 const FEATURE_W = [1.4, 1.4, 2, 2, 2, 1, .6, .6];
 
@@ -556,7 +520,7 @@ function rgb2hsv(r, g, b){
   if (d){ if (mx === r) h = ((g-b)/d) % 6; else if (mx === g) h = (b-r)/d + 2; else h = (r-g)/d + 4; h *= 60; if (h < 0) h += 360; }
   return [h, mx ? d/mx : 0, mx];
 }
-/** Colour-class fractions + edge density + mean brightness/saturation from a 64×64 downsample. */
+
 function extractFeatures(src){
   const cv = document.createElement('canvas'); cv.width = cv.height = 64;
   const x = cv.getContext('2d', {willReadFrequently:true});
@@ -582,7 +546,7 @@ function extractFeatures(src){
   const n = 4096;
   return [green/n, blueGreen/n, red/n, purple/n, orange/n, edges/3844, sv/n, ss/n];
 }
-let PROTOTYPES = null;   // learned per-class mean feature vectors
+let PROTOTYPES = null;
 function trainPrototypes(){
   PROTOTYPES = {};
   for (const id of ID_CLASSES){
@@ -591,7 +555,7 @@ function trainPrototypes(){
     PROTOTYPES[id] = acc;
   }
 }
-/** Classify an image → sorted class probabilities, growth stage, and whether a plant was detected. */
+
 function classify(src){
   if (!PROTOTYPES) trainPrototypes();
   const f = extractFeatures(src);
@@ -606,7 +570,6 @@ function classify(src){
   return {probs, stage, plant: plantFrac >= .08, features: f};
 }
 
-/* Procedural sample images (also the training set for the prototypes). */
 function drawSample(id, seed){
   const cv = document.createElement('canvas'); cv.width = cv.height = 200;
   const x = cv.getContext('2d'), r = mulberry32(hashStr(id) + seed * 7919);
@@ -663,7 +626,6 @@ function drawSample(id, seed){
   return cv;
 }
 
-/* ---- 2e. Assistant (intent recognition over the models above) ------ */
 const CROP_ALIASES = [
   ['redonion',['red onion','shallot','rathu lunu']], ['bigonion',['big onion','b onion','onion']],
   ['paddy',['paddy','rice','vee']], ['chilli',['chilli','chili','miris']], ['maize',['maize','corn','bada iringu']],
@@ -678,9 +640,6 @@ const findCrop = m => { for (const [id, al] of CROP_ALIASES) if (al.some(a => m.
 const findDistrict = m => DISTRICT_NAMES.find(d => m.includes(d.toLowerCase())) || null;
 const findSeason = m => /\bmaha\b/.test(m) ? 'maha' : /\byala\b/.test(m) ? 'yala' : null;
 
-/* =====================================================================
-   3. STATE (persisted in localStorage — the prototype's stand-in for Room/Firestore)
-   ===================================================================== */
 const STORE_KEY = 'agri-prototype-v1';
 const today = () => new Date().toISOString().slice(0, 10);
 function freshState(){
@@ -692,7 +651,6 @@ function load(){ try { const s = JSON.parse(localStorage.getItem(STORE_KEY)); if
 function save(){ try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) {} }
 function resetUsageIfNewDay(){ if (state.usage.day !== today()) state.usage = {day:today(), checks:0, ids:0}; }
 
-/* ==== UI ==== */
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const lkr = n => 'LKR ' + Math.round(n).toLocaleString('en-US');
@@ -729,7 +687,6 @@ function openSheet(html){
 }
 function closeSheet(){ $('#sheet').hidden = true; $('#sheet').innerHTML = ''; }
 
-/** Enforce plan quotas (checks / ids). Returns false and shows the upgrade sheet when exhausted. */
 function useQuota(kind){
   resetUsageIfNewDay();
   const limit = tier()[kind];
@@ -737,7 +694,6 @@ function useQuota(kind){
   state.usage[kind]++; save(); return true;
 }
 
-/* ---------- decorative canvas: field rows for the season banner / login ---------- */
 function paintField(cv){
   const dpr = window.devicePixelRatio || 1, w = cv.clientWidth || 130, h = cv.clientHeight || 110;
   cv.width = w * dpr; cv.height = h * dpr;
@@ -754,7 +710,6 @@ function paintField(cv){
   }
 }
 
-/* ---------- chrome ---------- */
 function renderChrome(){
   const on = !!state.user;
   $('#appbar').hidden = !on; $('#tabbar').hidden = !on;
@@ -780,7 +735,6 @@ function render(){
   ({home:screenHome, plan:screenPlan, market:screenMarket, identify:screenIdentify, chat:screenChat})[state.tab]();
 }
 
-/* ---------- login + onboarding (Firebase phone auth stand-in) ---------- */
 function renderLogin(){
   let el = $('#login');
   if (!el){ el = document.createElement('div'); el.id = 'login'; el.className = 'login'; $('#app').insertBefore(el, $('#sheet')); }
@@ -835,7 +789,6 @@ function signIn(user){
   save(); render();
 }
 
-/* ---------- alerts (FCM stand-in) ---------- */
 function buildAlerts(){
   if (!state.user) return [];
   const u = state.user, season = currentSeason(), S = SEASONS[season];
@@ -852,7 +805,6 @@ function buildAlerts(){
   return out;
 }
 
-/* ---------- HOME ---------- */
 function screenHome(){
   const u = state.user, season = currentSeason(), S = SEASONS[season];
   const inp = {district:u.district, season, soil:DISTRICTS[u.district].soil, water:u.water || 'minor'};
@@ -873,7 +825,7 @@ function screenHome(){
     <div class="hello"><span class="eyebrow">${esc(u.district)} · ${ZONE_NAME[DISTRICTS[u.district].z]}</span><h1>Hello, ${esc(u.name)}</h1></div>
     <div class="season"><canvas id="seasonField" aria-hidden="true"></canvas>
       <span class="eyebrow">Upcoming season</span><h2>${S.long}</h2>
-      <p>${S.months} · ${S.monsoon}. ${u.role === 'farmer' ? `Planning ${u.acres} acres with ${WATER[u.water].name.toLowerCase()}.` : 'A good time to start a kitchen garden.'}</p></div>
+      <p>${S.months} · ${S.monsoon}. ${u.role === 'farmer' ? `Planning ${u.acres} acres with${WATER[u.water].name.toLowerCase()}.` : 'A good time to start a kitchen garden.'}</p></div>
     <div class="quick">
       <button class="qa" data-act="goto" data-tab="plan"><span class="ic">${icon('plan')}</span><b>${u.role === 'gardener' ? 'Garden picks' : 'Check a crop'}</b><span>Suitability and alternatives</span></button>
       <button class="qa" data-act="goto" data-tab="market"><span class="ic">${icon('market')}</span><b>Market pulse</b><span>What others are planting</span></button>
@@ -887,9 +839,6 @@ function screenHome(){
     ${plans ? `<div class="card"><div class="section-h"><h2>My season plan</h2><span class="xs muted">shared anonymously</span></div><div class="list" style="margin-top:6px">${plans}</div></div>` : ''}`;
   requestAnimationFrame(() => { const c = $('#seasonField'); if (c) paintField(c); });
 }
-
-/* ---------- PLAN (farmer) / GARDEN (gardener) ---------- */
-function screenPlan(){ state.user.role === 'gardener' ? screenGarden() : screenFarmPlan(); }
 
 function planInputs(){
   const f = state.form;
@@ -960,7 +909,7 @@ function planResultHTML(){
       <p class="xs muted">Adding your plan updates the area's planting data anonymously, so others see the real picture.</p></div>
     <div class="card"><div class="section-h"><h2>Better-paying alternatives</h2><span class="xs muted">per acre</span></div>
       <div class="list" style="margin-top:6px">${alts.map(x => `
-        <button class="li" data-act="checkCrop" data-crop="${x.c.id}">${cropBadge(x.c)}<div class="grow"><div class="t">${esc(x.c.name)}</div><div class="s">Suitability ${x.s.score} · ${locked ? 'profit on Basic' : lkr(x.e.profit) + ' est.'}</div></div><div class="right">${pill(x.m.cls, x.m.short)}</div></button>`).join('') || '<p class="small muted">No other crop scores 60+ here. Try adding irrigation or changing season.</p>'}</div></div>`;
+        <button class="li" data-act="checkCrop" data-crop="${x.c.id}">${cropBadge(x.c)}<div class="grow"><div class="t">${esc(x.c.name)}</div><div class="s">Suitability ${x.s.score} ·${locked ? 'profit on Basic' : lkr(x.e.profit) + ' est.'}</div></div><div class="right">${pill(x.m.cls, x.m.short)}</div></button>`).join('') || '<p class="small muted">No other crop scores 60+ here. Try adding irrigation or changing season.</p>'}</div></div>`;
 }
 function screenGarden(){
   const u = state.user, f = state.form;
@@ -980,7 +929,6 @@ function screenGarden(){
           <div class="s" style="margin-top:2px">Needs ${x.c.sun}+ h sun · ${esc(x.c.days)}</div></div><div class="right">${pill(suitLabel(x.score).cls, x.score + '/100')}</div></div>`).join('')}</div></div>`;
 }
 
-/* ---------- MARKET ---------- */
 function screenMarket(){
   const f = state.form, season = f.season, district = f.district, lvl = tier().market;
   const rows = MARKET_CROPS.map(c => ({c, m:marketCell(season, district, c.id)}))
@@ -1006,8 +954,7 @@ function screenMarket(){
     <div class="card"><div class="list">${rows.map(({c, m}) => `
       <button class="li" data-act="marketDetail" data-crop="${c.id}" ${m.suppressed ? 'disabled style="opacity:.6;cursor:default"' : ''}>
         ${cropBadge(c)}
-        <div class="grow"><div class="row" style="justify-content:space-between"><span class="t">${esc(c.name)}</span>${pill(m.cls, m.label)}</div>
-          ${m.suppressed ? `<div class="s">Fewer than ${PRIVACY_K} farmers · hidden for privacy</div>` : lvl < 1 ? `<div class="s">${m.sat > 1.15 ? 'More planned than the market needs' : m.sat < .85 ? 'Less planned than the market needs' : 'Planting matches demand'}</div>` : `
+        <div class="grow"><div class="row" style="justify-content:space-between"><span class="t">${esc(c.name)}</span>${pill(m.cls, m.label)}</div>${m.suppressed ? `<div class="s">Fewer than ${PRIVACY_K} farmers · hidden for privacy</div>` : lvl < 1 ? `<div class="s">${m.sat > 1.15 ? 'More planned than the market needs' : m.sat < .85 ? 'Less planned than the market needs' : 'Planting matches demand'}</div>` : `
           <div class="satbar" aria-hidden="true"><i style="width:${Math.min(100, m.sat / 2 * 100)}%;background:${barColor(m.cls)}"></i><span class="ref" style="left:50%"></span></div>
           <div class="s num" style="margin-top:4px">${Math.round(m.P).toLocaleString('en-US')} of ${Math.round(m.D).toLocaleString('en-US')} ac demand · ${lkr(m.price)}/kg</div>`}
         </div></button>`).join('')}</div>
@@ -1057,7 +1004,6 @@ function openMarketDetail(cropId){
     <div class="row"><button class="btn grow ghost" data-act="closeSheet">Close</button><button class="btn grow" data-act="checkCrop" data-crop="${cropId}">Check suitability</button></div>`);
 }
 
-/* ---------- IDENTIFY ---------- */
 let SAMPLE_THUMBS = null;
 function sampleThumbs(){
   if (!SAMPLE_THUMBS) SAMPLE_THUMBS = ID_CLASSES.map(id => ({id, url: drawSample(id, 11).toDataURL('image/jpeg', .85)}));
@@ -1089,7 +1035,6 @@ function readImage(file){
 }
 function runIdentify(src, label){
   if (!useQuota('ids')) return;
-  // Square-crop the source onto a working canvas (what gets classified and shown).
   const cv = document.createElement('canvas'); cv.width = cv.height = 224;
   const w = src.naturalWidth || src.width, h = src.naturalHeight || src.height, s = Math.min(w, h);
   cv.getContext('2d').drawImage(src, (w - s) / 2, (h - s) / 2, s, s, 0, 0, 224, 224);
@@ -1118,7 +1063,6 @@ function runIdentify(src, label){
   $('#id-result').scrollIntoView({behavior:'smooth', block:'nearest'});
 }
 
-/* ---------- CHAT ---------- */
 function screenChat(){
   $('#screen').innerHTML = `
     <div class="msgs" id="msgs">${state.chat.map(m => `<div class="msg ${m.from}">${m.html}</div>`).join('')}</div>
@@ -1141,7 +1085,7 @@ function sendChat(text){
     $('#screen').scrollTop = $('#screen').scrollHeight;
   }, 550);
 }
-/** Intent recognition → answers grounded in the suitability and market models. */
+
 function botReply(raw){
   const m = raw.toLowerCase(), u = state.user;
   const crop = findCrop(m), district = findDistrict(m) || u.district, season = findSeason(m) || currentSeason();
@@ -1174,7 +1118,7 @@ function botReply(raw){
   }
   if (/(pest|disease|insect|worm|bug|fung|blight|curl|spots?|rot|wilt|mite|thrip|aphid)/.test(m)){
     const c = crop ? CROP[crop] : null;
-    return `${c ? `<p><b>${esc(c.name)}:</b> ${esc(c.pest)}</p>` : ''}<p>General approach: scout the field weekly, remove badly affected plants, keep weeds down, and rotate crops. Use pesticides only when damage passes the threshold, and follow the label.</p><p>If you have a photo, use <button class="link" data-act="goto" data-tab="identify">Identify</button> to confirm the crop first.</p>`;
+    return `${c ? `<p><b>${esc(c.name)}:</b>${esc(c.pest)}</p>` : ''}<p>General approach: scout the field weekly, remove badly affected plants, keep weeds down, and rotate crops. Use pesticides only when damage passes the threshold, and follow the label.</p><p>If you have a photo, use <button class="link" data-act="goto" data-tab="identify">Identify</button> to confirm the crop first.</p>`;
   }
   if (/(water|irrigat|drought|how much rain|watering)/.test(m)){
     const d = DISTRICTS[district], c = crop ? CROP[crop] : null;
@@ -1201,7 +1145,6 @@ function botReply(raw){
   return `<p>I can help with:</p><div class="chips"><button class="chip" data-act="ask" data-q="What should I plant this season?">What to plant</button><button class="chip" data-act="ask" data-q="Market pulse">Market pulse</button><button class="chip" data-act="ask" data-q="Fertilizer for paddy">Fertilizer</button><button class="chip" data-act="ask" data-q="When is Yala season?">Seasons</button></div><p class="xs muted">Try naming a crop and a district, e.g. "tomato in Matale".</p>`;
 }
 
-/* ---------- SHEETS: profile, upgrade, alerts, register ---------- */
 function openProfile(){
   if (!state.user){ toast('Sign in first, or try a demo profile.'); return; }
   const u = state.user, t = tier();
@@ -1242,7 +1185,6 @@ function openRegister(){
       <button class="btn block">Add to plan</button></form>`);
 }
 
-/* ---------- actions (event delegation) ---------- */
 const ACTIONS = {
   goto(d){ if (!state.user){ toast('Sign in first, or try a demo profile.'); return; } closeSheet(); state.tab = d.tab; save(); render(); $('#screen').scrollTop = 0; },
   demoLogin(d){ closeSheet(); signIn({...DEMO_USERS[d.who]}); toast(`Signed in as ${DEMO_USERS[d.who].name} (demo)`); },
@@ -1279,12 +1221,14 @@ const ACTIONS = {
   },
   setRole(){},
 };
+
 document.addEventListener('click', e => {
   const a = e.target.closest('[data-act]');
   if (!a || a.disabled) return;
-  if (a.tagName === 'INPUT') return;          // radios handled on save
+  if (a.tagName === 'INPUT') return;
   const fn = ACTIONS[a.dataset.act]; if (fn){ e.preventDefault(); fn(a.dataset, a); }
 });
+
 document.addEventListener('submit', e => {
   e.preventDefault();
   const id = e.target.id, f = state.form;
@@ -1298,7 +1242,7 @@ document.addEventListener('submit', e => {
   } else if (id === 'f-onboard'){
     const name = $('#ob-name').value.trim() || 'Farmer';
     signIn({name, phone:state.phone, role:document.querySelector('input[name="role"]:checked').value,
-            district:$('#ob-district').value, acres:Math.max(.1, +$('#ob-acres').value || 1), water:$('#ob-water').value, space:'pot', sun:6});
+            district:$('#ob-district').value, acres:Math.max(.1, +$('#ob-acres').value \vert{}\vert{} 1), water:$('#ob-water').value, space:'pot', sun:6});
   } else if (id === 'f-plan'){
     Object.assign(f, {crop:$('#p-crop').value, district:$('#p-district').value, season:document.querySelector('input[name="p-season"]:checked').value,
                       soil:$('#p-soil').value, water:$('#p-water').value, acres:Math.max(.1, +$('#p-acres').value || 1)});
@@ -1314,7 +1258,7 @@ document.addEventListener('submit', e => {
     const v = $('#chat-in').value; $('#chat-in').value = ''; sendChat(v);
   }
 });
-// Live-updating selects on Market and Garden screens.
+
 document.addEventListener('change', e => {
   const t = e.target, f = state.form; if (!f) return;
   if (t.id === 'm-district'){ f.district = t.value; save(); screenMarket(); }
@@ -1322,13 +1266,16 @@ document.addEventListener('change', e => {
   else if (t.id === 'g-district'){ f.district = t.value; save(); screenGarden(); }
   else if (t.name === 'g-space'){ f.space = t.value; save(); screenGarden(); }
   else if (t.name === 'g-sun'){ f.sun = +t.value; save(); screenGarden(); }
-  else if (t.id === 'p-district'){  // refresh "typical soil" label
+  else if (t.id === 'p-district'){
     f.district = t.value; const opt = $('#p-soil option[value="auto"]'); if (opt) opt.textContent = `Not sure · use typical for district (${SOILS[DISTRICTS[t.value].soil]})`;
   }
 });
+
 window.addEventListener('online', renderChrome);
 window.addEventListener('offline', renderChrome);
 
 load();
 render();
 </script>
+</body>
+</html>
