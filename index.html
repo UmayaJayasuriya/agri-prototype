@@ -229,31 +229,31 @@
 "use strict";
 
 var DISTRICTS = {
-  "Colombo":     {z:"W",e:"L",maha:1100,yala:1300,t:28,  soil:"RYP"},
-  "Gampaha":     {z:"W",e:"L",maha:1000,yala:1200,t:28,  soil:"RYP"},
-  "Kalutara":    {z:"W",e:"L",maha:1300,yala:1700,t:27.5,soil:"RYP"},
-  "Galle":       {z:"W",e:"L",maha:1100,yala:1300,t:27,  soil:"RYP"},
-  "Matara":      {z:"W",e:"L",maha:900, yala:1100,t:27,  soil:"RYP"},
-  "Ratnapura":   {z:"W",e:"M",maha:1500,yala:2200,t:26,  soil:"RYP"},
-  "Kegalle":     {z:"W",e:"M",maha:1400,yala:1800,t:26,  soil:"RYP"},
-  "Kandy":       {z:"W",e:"M",maha:1000,yala:900, t:24,  soil:"RYP"},
+  Colombo:     {z:"W",e:"L",maha:1100,yala:1300,t:28,  soil:"RYP"},
+  Gampaha:     {z:"W",e:"L",maha:1000,yala:1200,t:28,  soil:"RYP"},
+  Kalutara:    {z:"W",e:"L",maha:1300,yala:1700,t:27.5,soil:"RYP"},
+  Galle:       {z:"W",e:"L",maha:1100,yala:1300,t:27,  soil:"RYP"},
+  Matara:      {z:"W",e:"L",maha:900, yala:1100,t:27,  soil:"RYP"},
+  Ratnapura:   {z:"W",e:"M",maha:1500,yala:2200,t:26,  soil:"RYP"},
+  Kegalle:     {z:"W",e:"M",maha:1400,yala:1800,t:26,  soil:"RYP"},
+  Kandy:       {z:"W",e:"M",maha:1000,yala:900, t:24,  soil:"RYP"},
   "Nuwara Eliya":{z:"W",e:"U",maha:900, yala:1100,t:16,  soil:"RYP"},
-  "Badulla":     {z:"I",e:"U",maha:1100,yala:500, t:21,  soil:"RYP"},
-  "Matale":      {z:"I",e:"M",maha:1000,yala:600, t:25,  soil:"RBE"},
-  "Kurunegala":  {z:"I",e:"L",maha:900, yala:700, t:27.5,soil:"RBE"},
-  "Puttalam":    {z:"I",e:"L",maha:800, yala:400, t:28,  soil:"SR"},
-  "Monaragala":  {z:"I",e:"L",maha:1100,yala:450, t:27,  soil:"RBE"},
-  "Hambantota":  {z:"D",e:"L",maha:700, yala:350, t:28,  soil:"RBE"},
-  "Anuradhapura":{z:"D",e:"L",maha:900, yala:350, t:28,  soil:"RBE"},
-  "Polonnaruwa": {z:"D",e:"L",maha:1100,yala:300, t:28.5,soil:"RBE"},
-  "Ampara":      {z:"D",e:"L",maha:1300,yala:300, t:28,  soil:"LHG"},
-  "Batticaloa":  {z:"D",e:"L",maha:1400,yala:250, t:28.5,soil:"SR"},
-  "Trincomalee": {z:"D",e:"L",maha:1100,yala:250, t:29,  soil:"RBE"},
-  "Vavuniya":    {z:"D",e:"L",maha:1000,yala:300, t:28.5,soil:"RBE"},
-  "Mannar":      {z:"D",e:"L",maha:700, yala:200, t:29,  soil:"SR"},
-  "Kilinochchi": {z:"D",e:"L",maha:1000,yala:250, t:28.5,soil:"RYL"},
-  "Mullaitivu":  {z:"D",e:"L",maha:1100,yala:250, t:28.5,soil:"RBE"},
-  "Jaffna":      {z:"D",e:"L",maha:900, yala:150, t:29,  soil:"RYL"}
+  Badulla:     {z:"I",e:"U",maha:1100,yala:500, t:21,  soil:"RYP"},
+  Matale:      {z:"I",e:"M",maha:1000,yala:600, t:25,  soil:"RBE"},
+  Kurunegala:  {z:"I",e:"L",maha:900, yala:700, t:27.5,soil:"RBE"},
+  Puttalam:    {z:"I",e:"L",maha:800, yala:400, t:28,  soil:"SR"},
+  Monaragala:  {z:"I",e:"L",maha:1100,yala:450, t:27,  soil:"RBE"},
+  Hambantota:  {z:"D",e:"L",maha:700, yala:350, t:28,  soil:"RBE"},
+  Anuradhapura:{z:"D",e:"L",maha:900, yala:350, t:28,  soil:"RBE"},
+  Polonnaruwa: {z:"D",e:"L",maha:1100,yala:300, t:28.5,soil:"RBE"},
+  Ampara:      {z:"D",e:"L",maha:1300,yala:300, t:28,  soil:"LHG"},
+  Batticaloa:  {z:"D",e:"L",maha:1400,yala:250, t:28.5,soil:"SR"},
+  Trincomalee: {z:"D",e:"L",maha:1100,yala:250, t:29,  soil:"RBE"},
+  Vavuniya:    {z:"D",e:"L",maha:1000,yala:300, t:28.5,soil:"RBE"},
+  Mannar:      {z:"D",e:"L",maha:700, yala:200, t:29,  soil:"SR"},
+  Kilinochchi: {z:"D",e:"L",maha:1000,yala:250, t:28.5,soil:"RYL"},
+  Mullaitivu:  {z:"D",e:"L",maha:1100,yala:250, t:28.5,soil:"RBE"},
+  Jaffna:      {z:"D",e:"L",maha:900, yala:150, t:29,  soil:"RYL"}
 };
 var DISTRICT_NAMES = Object.keys(DISTRICTS).sort();
 var ZONE_NAME = {W:"Wet zone", I:"Intermediate zone", D:"Dry zone"};
@@ -921,7 +921,7 @@ function screenFarmPlan(){
         opt(soilPairs, f.soil) + "</select></div>" +
       '<div class="grid2">' +
         '<div class="field"><label for="p-water">Water source</label><select id="p-water">' + opt(waterPairs, f.water) + "</select></div>" +
-        '<div class="field"><label for="p-acres">Land (acres)</label><input id="p-acres" type="number" min="0.1" step="0.1" value="' + f.acres + '"></div>' +
+        '<div class="field"><label for="p-acres">Land (acres)</label><input id="p-acres" type="number" min="0.1" step="0.1" value="' + f.acres + '"></div>" +
       "</div>" +
       '<div class="row"><button class="btn grow">Analyse</button><span class="xs muted num">' + state.usage.checks + "/" + (tier().checks === Infinity ? "unlimited" : tier().checks) + " today</span></div>" +
     "</form>" +
@@ -1182,7 +1182,7 @@ function runIdentify(src, label){
   }
   $("#id-result").innerHTML = '<div class="card stack">' +
       '<div class="idwrap"><canvas id="id-preview" width="224" height="224" aria-label="' + esc(label) + '"></canvas><div class="stack grow" style="gap:8px;min-width:0">' + body + "</div></div>" +
-      (res.plant ? ('<p class="small"><b>Care note:</b> ' + esc(c.tip) + '</p><div id="fb" class="stack" style="gap:8px"><span class="small muted">Is this correct?</span><div class="row"><button class="btn sm soft grow" data-act="fbYes" data-crop="' + top.id + '">' + icon("check") + ' Yes</button><button class="btn sm ghost grow" data-act="fbNo" data-crop="' + top.id + '">No, correction</button></div></div>') : "") +
+      (res.plant ? ('<p class="small"><b>Care note:</b> ' + esc(c.tip) + '</p><div id="fb" class="stack" style="gap:8px"><span class="small muted">Is this correct?</span><div class="row"><button class="btn sm soft grow" data-act="fbYes" data-crop="' + top.id + '">' + icon("check") + ' Yes</button><button class="btn sm ghost grow" data-act="fbNo" data-crop="' + top.id + '">No, send correction</button></div></div>') : "") +
     "</div>";
   $("#id-preview").getContext("2d").drawImage(cv, 0, 0);
   state.history.unshift({type:"id", crop:top.id, p:top.p, at:Date.now()}); state.history = state.history.slice(0, 20); save();
@@ -1221,7 +1221,7 @@ function botReply(raw){
   var crop = findCrop(m), district = findDistrict(m) || u.district, season = findSeason(m) || currentSeason();
   var inp = {district:district, season:season, soil:DISTRICTS[district].soil, water:u.water || "minor"};
   var S = SEASONS[season];
-  var cropRow = function(c, right){ return '<div class="li">' + cropBadge(c) + '<div class="grow"><div class="t">' + esc(c.name) + '</div></div><div class="right">' + right + "</div></div>"; };
+  var cropRow = function(c, rightSide){ return '<div class="li">' + cropBadge(c) + '<div class="grow"><div class="t">' + esc(c.name) + '</div></div><div class="right">' + rightSide + "</div></div>"; };
 
   if (/^(hi|hello|hey|ayubowan|vanakkam|good (morning|evening))\b/.test(m))
     return "<p>Hello " + esc(u.name) + "! Ask what to plant, check market conditions, or review crop management guidelines.</p>";
@@ -1333,7 +1333,7 @@ function openAlerts(){
 function openRegister(){
   var plan = state.lastPlan, crop = plan.crop, acres = plan.acres, f = state.form;
   openSheet("<h2>Add " + esc(CROP[crop].name) + " to your season plan</h2>" +
-    '<p class="small muted">' + esc(f.district) + " - " + SEASONS[f.season].long + ". Acreage is aggregated with differential privacy ($k \\ge 5$).</p>" +
+    '<p class="small muted">' + esc(f.district) + " - " + SEASONS[f.season].long + ". Acreage is aggregated with privacy safeguards (k >= 5).</p>" +
     '<form id="f-register" class="stack"><div class="field"><label for="r-acres">Acres to cultivate</label><input id="r-acres" type="number" min="0.1" step="0.1" value="' + acres + '"></div>' +
       '<button class="btn block">Commit to Plan</button></form>');
 }
